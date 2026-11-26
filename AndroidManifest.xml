@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.wann1.netpulse"
+    android:versionCode="18"
+    android:versionName="2.7">
+
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33" />
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- 注意：不要为读 SSID 加定位权限。
+         这台 ROM 对 getSSID() 做了硬脱敏，授了定位也只会拿到 "?"（实测多次）。
+         WiFi 名称改用「连接指纹 + 用户命名」方案，见 NetLog 的说明。 -->
+
+    <!-- WiFi 日志要写到根目录 /sdcard/NetPulse-wifi.log。
+         Android 11+ 需要「所有文件访问」才允许直接写根目录；
+         没授权时 NetLog 会自动退化到 app 专属目录，不会崩也不会漏记。
+         targetSdk 33 下不需要 requestLegacyExternalStorage。 -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <!-- Android 11+ 包可见性：不声明这里，getPackageUid() 会抛 NameNotFoundException，
+         导致抓不到串流进程的 uid、进而抓不到真实服务器地址。 -->
+    <queries>
+        <package android:name="com.gold.streaming" />
+        <package android:name="com.gold.launcher" />
+    </queries>
+
+    <application
+        android:label="NetPulse"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".HudService"
+            android:exported="true"
+            android:process=":hud"
+            android:hardwareAccelerated="false" />
+
+        <receiver
+            android:name=".ControlReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.wann1.netpulse.START" />
+                <action android:name="com.wann1.netpulse.STOP" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
